@@ -10,7 +10,7 @@ export interface Programs {
   size: string;
 }
 
-export interface Software extends Omit<Programs, "url"> {
+export interface ProgramDetails extends Omit<Programs, "url"> {
   posters: string[];
   developer: string;
   interface_language: string;
@@ -20,7 +20,7 @@ export interface Software extends Omit<Programs, "url"> {
   note: string;
   downloads: DownloadLink[];
   previous_version: DownloadLink[];
-  description: Paragraph[];
+  description: string[];
   new_features: string;
   official_site: string;
   faq: Paragraph[];
