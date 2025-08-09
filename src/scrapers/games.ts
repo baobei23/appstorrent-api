@@ -1,34 +1,34 @@
 import { Request } from 'express';
 import * as cheerio from 'cheerio';
 import { AxiosResponse } from 'axios';
-import { Programs, ProgramDetails, Paragraph, DownloadLink } from '@/types';
+import { Games, GameDetails, Paragraph, DownloadLink } from '@/types';
 
 /**
- * Scrape programs (software list) asynchronously
+ * Scrape games (software list) asynchronously
  * @param {Request} req Express Request (used for building absolute URLs)
  * @param {AxiosResponse} res Axios Response containing HTML
- * @returns {Promise<Programs[]>} array of software objects
+ * @returns {Promise<Games[]>} array of software objects
  */
-export const scrapePrograms = async (
+export const scrapeGames = async (
   req: Request,
   res: AxiosResponse
-): Promise<Programs[]> => {
+): Promise<Games[]> => {
   const $: cheerio.Root = cheerio.load(res.data);
-  const payload: Programs[] = [];
+  const payload: Games[] = [];
 
   const {
     protocol,
     headers: { host },
   } = req;
 
-  $('article.soft-item').each((i, el) => {
+  $('article.games-item').each((i, el) => {
     const node: cheerio.Cheerio = $(el);
 
     const link: string = node.find('div.text > a').attr('href') ?? '';
     const trimmedLink: string = link.replace(/\/+$/, '');
     const idFromLink: string = trimmedLink.split('/').pop() ?? '';
 
-    const rawImgSrc: string = node.find('img.xfieldimage').attr('src') ?? '';
+    const rawImgSrc: string = node.find('a.link-title > img').attr('src') ?? '';
 
     const categoriesText: string = node.find('span.caption-1').text().trim();
     const categories: string[] = categoriesText
@@ -36,13 +36,12 @@ export const scrapePrograms = async (
       .map((x) => x.trim())
       .filter((x) => x.length > 0);
 
-    const obj: Programs = {
+    const obj: Games = {
       _id: idFromLink,
       title: node.find('h2.body-2').text().trim(),
-      version: node.find('div.counter').text().trim(),
       img: `${process.env.URL ?? ''}${rawImgSrc}`,
       category: categories.length > 0 ? categories : [categoriesText],
-      url: `${protocol}://${host}/program/${idFromLink}`,
+      url: `${protocol}://${host}/game/${idFromLink}`,
       size: node.find('div.size > div.marker').text().trim(),
     };
 
@@ -56,12 +55,12 @@ export const scrapePrograms = async (
  * Scrape software details asynchronously
  * @param {Request} req Express Request
  * @param {AxiosResponse} res Axios Response containing HTML
- * @returns {Promise<ProgramDetails>} software details object
+ * @returns {Promise<GameDetails>} software details object
  */
-export const scrapeProgramDetails = async (
+export const scrapeGameDetails = async (
   req: Request,
   res: AxiosResponse
-): Promise<ProgramDetails> => {
+): Promise<GameDetails> => {
   const $: cheerio.Root = cheerio.load(res.data);
 
 
@@ -71,6 +70,7 @@ export const scrapeProgramDetails = async (
   const title: string = $('div.title.page.main-title h1').first().text().trim();
   const version: string = $('span[itemprop="softwareVersion"]').first().text().trim();
   const developer: string = $('span[itemprop="author"]').first().text().trim();
+
   const iconSrc: string = $('div.title.page .icon img').first().attr('src') || '';
   const img: string = `${process.env.URL ?? ''}${iconSrc}`;
 
@@ -94,11 +94,11 @@ export const scrapeProgramDetails = async (
   });
 
   // Info blocks (interface language, activation, compatibility, architecture, note)
+  let releaseDate = '';
   let interfaceLanguage = '';
   let activation = '';
-  let compatibility = '';
+  let tested = ''
   let architecture = '';
-  let note = '';
 
   $('div.info .info-block').each((_, el) => {
     const label: string = $(el).find('span.body-2.gray').first().text().trim().toLowerCase();
@@ -113,20 +113,20 @@ export const scrapeProgramDetails = async (
       .trim();
 
     switch (label) {
+      case 'release date':
+        if (!releaseDate) releaseDate = valueText;
+        break;
       case 'interface language':
         if (!interfaceLanguage) interfaceLanguage = valueText;
         break;
       case 'activation (rg)':
         if (!activation) activation = valueText;
         break;
-      case 'compatibility':
-        if (!compatibility) compatibility = valueText;
+      case 'tested':
+        if (!tested) tested = valueText;
         break;
       case 'architecture':
         if (!architecture) architecture = valueText;
-        break;
-      case 'note':
-        if (!note) note = valueText;
         break;
       default:
         break;
@@ -165,12 +165,14 @@ export const scrapeProgramDetails = async (
     }
   });
   
-
-  // What's New content (tab #tabs-3)
-  const newFeatures: string = $('#tabs-3 .body-content')
-    .text()
-    .replace(/\s+/g, ' ')
-    .trim();
+  // Requirements (tab #tabs-3)
+  const requirements: string[] = [];
+  $('#tabs-3 .body-content li').each((_, el) => {
+    const text = $(el).text().replace(/\s+/g, ' ').trim();
+    if (text) {
+      requirements.push(text);
+    }
+  });
 
   // FAQ
   const faq: Paragraph[] = [];
@@ -187,7 +189,7 @@ export const scrapeProgramDetails = async (
     }
   });
 
-  const details: ProgramDetails = {
+  const details: GameDetails = {
     _id: idFromUrl,
     title,
     version,
@@ -198,13 +200,13 @@ export const scrapeProgramDetails = async (
     developer,
     interface_language: interfaceLanguage,
     activation,
-    compatibility,
+    releaseDate,
     architecture,
-    note,
+    tested,
     downloads,
     previous_version: previousVersion,
     description,
-    newFeatures: newFeatures,
+    requirements,
     officialSite: officialSite,
     faq,
   };

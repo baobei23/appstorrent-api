@@ -21,8 +21,8 @@ export interface ProgramDetails extends Omit<Programs, "url"> {
   downloads: DownloadLink[];
   previous_version: DownloadLink[];
   description: string[];
-  new_features: string;
-  official_site: string;
+  newFeatures: string;
+  officialSite: string;
   faq: Paragraph[];
 }
 
@@ -34,4 +34,12 @@ export interface Paragraph {
 export interface DownloadLink {
   type: string;
   link: string;
+}
+
+export interface Games extends Omit<Programs, "version"> {}
+
+export interface GameDetails extends Omit<ProgramDetails, "compatibility" | "note" | "newFeatures"> {
+  releaseDate: string;
+  tested: string;
+  requirements: string[];
 }
