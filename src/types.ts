@@ -45,7 +45,7 @@ export interface GameDetails
   requirements: string[];
 }
 
-export interface ISetOfProgramsCategory {
+export interface ISetOfCategory {
   parameter: string;
   name: string;
   url: string;

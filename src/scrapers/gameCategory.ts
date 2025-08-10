@@ -1,40 +1,40 @@
 import * as cheerio from "cheerio";
 import { AxiosResponse } from "axios";
 import { Request } from "express";
-import { ISetOfProgramsCategory } from "@/types";
-import programCategory from "@/json/programCategory.json";
+import { ISetOfCategory } from "@/types";
+import gameCategory from "@/json/gameCategory.json";
 
 /**
- * Scrape a set of genres asynchronously
+ * Scrape a set of category asynchronously
  * @param {Request} ExpressRequest
  * @param {AxiosResponse} AxiosResponse
- * @returns {Promise.<ISetOfProgramsCategory[]>} a set of genres
+ * @returns {Promise.<ISetOfCategory[]>} a set of category
  */
 export const scrapeSetOfCategory = async (
   req: Request,
   res: AxiosResponse
-): Promise<ISetOfProgramsCategory[]> => {
+): Promise<ISetOfCategory[]> => {
   const $: cheerio.Root = cheerio.load(res.data);
-  const payload: ISetOfProgramsCategory[] = [];
+  const payload: ISetOfCategory[] = [];
   const {
     headers: { host },
     protocol,
   } = req;
 
-  $("div.dropdown-menu-category#gameDropdown > a").each((_, el) => {
+  $("div.dropdown-menu-category#progDropdown > a").each((_, el) => {
     const href: string = $(el).attr("href") || "";
     const name: string = $(el).text().replace(/\s+/g, " ").trim();
 
     const trimmed = href.replace(/\/$/, "");
     const slug = trimmed.split("/").pop() || "";
 
-    const obj: ISetOfProgramsCategory = {
+    const obj: ISetOfCategory = {
       parameter:
-        programCategory.find(
+        gameCategory.find(
           (category) => category.toLowerCase() === slug.toLowerCase()
         ) || slug,
       name,
-      url: `${protocol}://${host}/programs-category/${slug}`,
+      url: `${protocol}://${host}/games-category/${slug}`,
     };
 
     payload.push(obj);
