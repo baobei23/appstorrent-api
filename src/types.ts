@@ -38,8 +38,15 @@ export interface DownloadLink {
 
 export interface Games extends Omit<Programs, "version"> {}
 
-export interface GameDetails extends Omit<ProgramDetails, "compatibility" | "note" | "newFeatures"> {
+export interface GameDetails
+  extends Omit<ProgramDetails, "compatibility" | "note" | "newFeatures"> {
   releaseDate: string;
   tested: string;
   requirements: string[];
+}
+
+export interface ISetOfProgramsCategory {
+  parameter: string;
+  name: string;
+  url: string;
 }

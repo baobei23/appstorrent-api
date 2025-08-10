@@ -165,14 +165,17 @@ export const scrapeGameDetails = async (
     }
   });
   
-  // Requirements (tab #tabs-3)
   const requirements: string[] = [];
-  $('#tabs-3 .body-content li').each((_, el) => {
+  $('#tabs-3 .body-content > p').each((_, el) => {
     const text = $(el).text().replace(/\s+/g, ' ').trim();
-    if (text) {
-      requirements.push(text);
-    }
+    if (text) requirements.push(text);
   });
+  
+  $('#tabs-3 .body-content ul li').each((_, el) => {
+    const text = $(el).text().replace(/\s+/g, ' ').trim();
+    if (text) requirements.push(text);
+  });
+  
 
   // FAQ
   const faq: Paragraph[] = [];
